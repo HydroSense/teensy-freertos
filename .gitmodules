@@ -1,3 +1,6 @@
 [submodule "platform/cores"]
 	path = platform/cores
 	url = git@github.com:PaulStoffregen/cores.git
+[submodule "freertos"]
+	path = freertos
+	url = git@github.com:cjlano/freertos.git
