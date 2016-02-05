@@ -7,7 +7,7 @@ file(GLOB freertos_src "freertos/FreeRTOS/Source/*.c")
 set(freertos_port "${CMAKE_SOURCE_DIR}/freertos/FreeRTOS/Source/portable/GCC/ARM_CM3/port.c")
 
 # collect the Teensy files
-#file(GLOB teensy_src "platform/cores/teensy3/*.c" "platform/cores/teensy3/*.cpp" "platform/cores/teensy3/*.h" "platform/cores/teensy3/*.h")
+file(GLOB teensy_src "platform/cores/teensy3/*.c" "platform/cores/teensy3/*.cpp" "platform/cores/teensy3/*.h" "platform/cores/teensy3/*.h")
 set(platform_src "${CMAKE_SOURCE_DIR}/platform/mk20dx128.c")
 
 # collect the application files

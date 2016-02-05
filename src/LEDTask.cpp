@@ -8,13 +8,21 @@ int LED_CONFIG = 0x00000102;
 int LED_MASK   = 0x00000020;
 int counter = 0;
 
+#include <Arduino.h>
+
+int ledPin = 13;
+
 void LEDTask(void* args) {
+  //PORTC_PCR5 = aLED_CONFIG;
+  //GPIOC_PDDR |= aLED_MASK;
+  //GPIOC_PDOR |= aLED_MASK;
+  pinMode(ledPin, OUTPUT);
 
   for(;;){
     if (counter++ % 2) {
-      GPIOC_PDOR &= ~LED_MASK;
+      digitalWrite(ledPin, LOW);
     } else {
-      GPIOC_PDOR |= LED_MASK;
+      digitalWrite(ledPin, HIGH);
     }
 
     vTaskDelay(10);

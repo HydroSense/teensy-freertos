@@ -1,9 +1,15 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+#include <Arduino.h>
+
+
 void SerialTask(void* args) {
-  // assume that serial has already been created
+  // initialize the serial
+  Serial.begin(9600);
+
   for (;;) {
-    vTaskDelay(500);
+    Serial.println("Hello World");
+    vTaskDelay(20);
   }
 }

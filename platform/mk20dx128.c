@@ -32,6 +32,9 @@
 #include "core_pins.h" // testing only
 #include "ser_print.h" // testing only
 
+#include <FreeRTOS.h>
+#include <FreeRTOSConfig.h>
+
 extern unsigned long _stext;
 extern unsigned long _etext;
 extern unsigned long _sdata;
@@ -67,6 +70,19 @@ void unused_isr(void)
 void xPortPendSVHandler( void ) __attribute__ (( naked ));
 void xPortSysTickHandler( void );
 void vPortSVCHandler( void ) __attribute__ (( naked ));
+
+// from Arduino port
+extern volatile uint32_t systick_millis_count;
+
+__attribute__ (( weak, naked )) void systick_isr(void) {
+	// increment the systick counter
+	systick_millis_count += 1000/configTICK_RATE_HZ;
+
+	// unconditionally branch to the systick handler
+	__asm volatile (
+		"B	xPortSysTickHandler"
+	);
+}
 
 void nmi_isr(void)		__attribute__ ((weak, alias("unused_isr")));
 void hard_fault_isr(void)	__attribute__ ((weak, alias("fault_isr")));
@@ -185,10 +201,6 @@ void software_isr(void)		__attribute__ ((weak, alias("unused_isr")));
 __attribute__ ((section(".dmabuffers"), used, aligned(512)))
 void (* _VectorsRam[NVIC_NUM_INTERRUPTS+16])(void);
 
-void xPortPendSVHandler( void ) __attribute__ (( naked ));
-void xPortSysTickHandler( void );
-void vPortSVCHandler( void ) __attribute__ (( naked ));
-
 __attribute__ ((section(".vectors"), used))
 void (* const _VectorsFlash[NVIC_NUM_INTERRUPTS+16])(void) =
 {
@@ -207,7 +219,7 @@ void (* const _VectorsFlash[NVIC_NUM_INTERRUPTS+16])(void) =
 	debugmonitor_isr,				// 12 ARM: Debug Monitor
 	fault_isr,					// 13 --
 	xPortPendSVHandler,  //pendablesrvreq_isr,				// 14 ARM: Pendable req serv(PendableSrvReq)
-	xPortSysTickHandler, //systick_isr,					// 15 ARM: System tick timer (SysTick)
+	systick_isr, //xPortSysTickHandler, //systick_isr,					// 15 ARM: System tick timer (SysTick)
 	dma_ch0_isr,					// 16 DMA channel 0 transfer complete
 	dma_ch1_isr,					// 17 DMA channel 1 transfer complete
 	dma_ch2_isr,					// 18 DMA channel 2 transfer complete
@@ -381,6 +393,14 @@ void ResetHandler(void)
 	LMEM_PCCCR = 0x85000003;
 #endif
 
+#ifdef KINETISK
+	// if the RTC oscillator isn't enabled, get it started early
+	if (!(RTC_CR & RTC_CR_OSCE)) {
+		RTC_SR = 0;
+		RTC_CR = RTC_CR_SC16P | RTC_CR_SC4P | RTC_CR_OSCE;
+	}
+#endif
+
 
 	// release I/O pins hold, if we woke up from VLLS mode
 	if (PMC_REGSC & PMC_REGSC_ACKISO) PMC_REGSC |= PMC_REGSC_ACKISO;
@@ -395,9 +415,9 @@ void ResetHandler(void)
 	while (dest < &_ebss) *dest++ = 0;
 
 	// default all interrupts to medium priority level
-	//for (int i=0; i < NVIC_NUM_INTERRUPTS + 16; i++) _VectorsRam[i] = _VectorsFlash[i];
+	for (int i=0; i < NVIC_NUM_INTERRUPTS + 16; i++) _VectorsRam[i] = _VectorsFlash[i];
 	//for (int i=0; i < NVIC_NUM_INTERRUPTS; i++) NVIC_SET_PRIORITY(i, 128);
-	//SCB_VTOR = (uint32_t)_VectorsRam;	// use vector table in RAM
+	SCB_VTOR = (uint32_t)_VectorsRam;	// use vector table in RAM
 
 	// hardware always starts in FEI mode
 	//  C1[CLKS] bits are written to 00
