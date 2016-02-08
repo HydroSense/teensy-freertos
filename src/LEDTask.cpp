@@ -13,9 +13,6 @@ int counter = 0;
 int ledPin = 13;
 
 void LEDTask(void* args) {
-  //PORTC_PCR5 = aLED_CONFIG;
-  //GPIOC_PDDR |= aLED_MASK;
-  //GPIOC_PDOR |= aLED_MASK;
   pinMode(ledPin, OUTPUT);
 
   for(;;){
@@ -27,12 +24,14 @@ void LEDTask(void* args) {
 
     vTaskDelay(10);
   }
+}
 
-  /*
+/* pure ARM configuration
   // setup
   PORTC_PCR5 = LED_CONFIG;
   GPIOC_PDDR |= LED_MASK;
 
+  // execution
   for(;;) {
     if (counter++ % 2) {
       GPIOC_PDOR |= LED_MASK;
@@ -40,5 +39,4 @@ void LEDTask(void* args) {
       GPIOC_PDOR &= ~LED_MASK;
     }
   }
-  */
-}
+*/
